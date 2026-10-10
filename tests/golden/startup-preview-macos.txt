@@ -1,0 +1,35 @@
+PREVIEW: nothing has been changed.
+Would write this file:
+  /srv/kit-data/Library/LaunchAgents/cdp-setup-kit-work.plist
+---- file contents ----
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>cdp-setup-kit-work</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Applications/Google Chrome.app/Contents/MacOS/Google Chrome</string>
+    <string>--user-data-dir=/srv/kit-data/profiles/work</string>
+    <string>--remote-debugging-port=9222</string>
+    <string>--remote-debugging-address=127.0.0.1</string>
+    <string>--no-first-run</string>
+    <string>--no-default-browser-check</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <false/>
+  <key>LimitLoadToSessionType</key>
+  <string>Aqua</string>
+  <key>X-Cdp-Setup-Kit-Managed</key>
+  <string>1</string>
+  <key>X-Cdp-Setup-Kit-Profile</key>
+  <string>work</string>
+</dict>
+</plist>
+---- end ----
+Effect: the "work" Chrome window opens each time you sign in. Takes effect at the next graphical sign-in; existing windows stay open.
+To do it:   cdp-setup-kit startup enable work --apply
+To undo it: cdp-setup-kit startup disable work --apply

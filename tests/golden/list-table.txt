@@ -1,0 +1,3 @@
+NAME  PORT  ENDPOINT               STATUS                      STARTUP   BROWSER
+shop  9223  http://127.0.0.1:9223  stopped                     disabled  -
+work  9222  http://127.0.0.1:9222  running (endpoint answers)  enabled   Chrome/141.0.7390.54

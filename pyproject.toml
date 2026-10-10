@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdp-setup-kit"
+version = "0.2.0"
+description = "Set up visible Chrome windows with Chrome DevTools Protocol access."
+requires-python = ">=3.9"
+license = "MIT"
+dependencies = []
+
+[project.scripts]
+cdp-setup-kit = "cdp_setup_kit.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["cdp_setup_kit*"]

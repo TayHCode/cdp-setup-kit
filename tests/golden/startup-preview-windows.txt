@@ -1,0 +1,56 @@
+PREVIEW: nothing has been changed.
+Apply first queries the task and refuses foreign entries.
+An entry already matching this plan is unchanged. A missing entry needs no removal.
+Would write this file:
+  D:\kit-data\state\startup\cdp-setup-kit-work.xml
+---- file contents ----
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Source>cdp-setup-kit</Source>
+    <Description>Managed by cdp-setup-kit. Opens the work Chrome window with its debugging port at sign-in.</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+      <UserId>PC\operator</UserId>
+    </LogonTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>PC\operator</UserId>
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>false</AllowHardTerminate>
+    <StartWhenAvailable>false</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>C:\Program Files\Google\Chrome\Application\chrome.exe</Command>
+      <Arguments>--user-data-dir=D:\kit-data\profiles\work --remote-debugging-port=9222 --remote-debugging-address=127.0.0.1 --no-first-run --no-default-browser-check</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+---- end ----
+Would then run this command:
+  schtasks /Query /TN cdp-setup-kit-work /XML
+Would then run this command:
+  schtasks /Create /TN cdp-setup-kit-work /XML D:\kit-data\state\startup\cdp-setup-kit-work.xml
+For an existing marked entry that differs, use this command instead:
+  schtasks /Create /TN cdp-setup-kit-work /XML D:\kit-data\state\startup\cdp-setup-kit-work.xml /F
+Effect: the "work" Chrome window opens each time you sign in.
+To do it:   cdp-setup-kit startup enable work --apply
+To undo it: cdp-setup-kit startup disable work --apply

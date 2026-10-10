@@ -1,0 +1,26 @@
+Profile "work" listens at:  http://127.0.0.1:9222
+
+Give your agent that HTTP address, not a ws:// address. The ws:// address
+changes every time the browser starts. The HTTP address does not. Clients
+look up the current ws:// address from it each time they connect.
+
+Attach to the window's existing context. A new context starts signed out.
+
+Playwright (Node.js):
+  const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
+  const context = browser.contexts()[0];
+
+Playwright (Python):
+  browser = playwright.chromium.connect_over_cdp("http://127.0.0.1:9222")
+  context = browser.contexts[0]
+
+Playwright MCP server:
+  npx @playwright/mcp@0.0.83 --cdp-endpoint http://127.0.0.1:9222
+
+Chrome DevTools MCP server:
+  npx chrome-devtools-mcp@1.10.1 --browser-url=http://127.0.0.1:9222
+
+Check that it is up (this does not list your tabs):
+  cdp-setup-kit list
+
+More: docs/connect-agents.md
