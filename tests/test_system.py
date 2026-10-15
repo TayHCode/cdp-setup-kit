@@ -39,7 +39,7 @@ class SystemTests(support.KitTestCase):
             with self.assertRaises(RealActionForbidden):
                 system.spawn_detached(["fake"])
             spawn.assert_not_called()
-
+            # The process boundary is mocked even when checking its normal options.
             system.env.pop("CDP_SETUP_KIT_FORBID_REAL", None)
             system.spawn_detached(["fake"])
             self.assertTrue(spawn.call_args.kwargs["start_new_session"])
