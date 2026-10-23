@@ -125,3 +125,62 @@ class WizardTests(support.KitTestCase):
                 self.assertIn("SECURITY NOTICE", out)
                 self.assertIn("MCP", out)
         self.assertEqual(self.run_cli(["init", "--quiet"])[0], 2)
+
+
+class ExistingEndpointTests(support.KitTestCase):
+    def test_reachable_endpoint_needs_no_chrome_or_local_profile(self):
+        with support.FakeCdpServer() as server:
+            address = 'http://127.0.0.1:' + str(server.port)
+            code, out, err = self.run_cli(['init', '--yes', '--no-open', '--endpoint', address])
+            self.assertEqual((code, err), (0, ''))
+            self.assertIn(address, out)
+            self.assertIn('No local profile was created', out)
+            self.assertIn('connectOverCDP', out)
+            self.assertEqual(server.requests, ['/json/version'])
+        self.assertFalse(any(c[0] in {'write_text', 'make_dir', 'spawn', 'run'} for c in self.system.calls))
+        self.assertFalse(self.system.exists(locations(self.system).config))
+
+    def test_unreachable_or_non_cdp_endpoint_fails_without_changes(self):
+        from unittest.mock import patch
+        for kind in ('refused', 'not_cdp'):
+            with self.subTest(kind=kind), patch.object(self.system, 'cdp_at', return_value={'kind': kind}):
+                code, out, err = self.run_cli(['init', '--yes', '--endpoint', 'http://localhost:9333'])
+                self.assertEqual(code, 5)
+                self.assertIn('CDP endpoint', err)
+                self.assertNotIn('No local profile was created', out)
+        self.assertFalse(self.system.exists(locations(self.system).config))
+
+    def test_external_endpoint_rejects_local_profile_options(self):
+        for option in (['--name', 'work'], ['--port', '9333'], ['--chrome', 'chrome']):
+            with self.subTest(option=option):
+                code, _, err = self.run_cli(['init', '--yes', '--endpoint', 'http://localhost:9333', *option])
+                self.assertEqual(code, 2)
+                self.assertIn('cannot combine --endpoint', err)
+        self.assertFalse(self.system.exists(locations(self.system).config))
+
+    def test_external_endpoint_consent_and_quiet(self):
+        from unittest.mock import patch
+        with patch.object(self.system, 'cdp_at', return_value={'kind': 'valid'}) as probe:
+            self.system.answers = ['n']
+            code, out, _ = self.run_cli(['init', '--endpoint', 'http://localhost:9333'])
+            self.assertEqual(code, 0)
+            self.assertIn('No changes made', out)
+            probe.assert_not_called()
+            self.assertEqual(self.run_cli(['init', '--quiet', '--endpoint', 'http://localhost:9333'])[0], 2)
+            code, out, _ = self.run_cli(['init', '--yes', '--quiet', '--endpoint', 'http://localhost:9333'])
+            self.assertEqual(code, 0)
+            self.assertNotIn('SECURITY NOTICE', out)
+            self.assertIn('http://localhost:9333', out)
+
+    def test_external_endpoint_preserves_existing_config_and_backup(self):
+        from unittest.mock import patch
+        self.run_cli(['add', 'work', '--port', '9333'])
+        paths = locations(self.system)
+        before = self.system.read_text(paths.config)
+        self.system.write_text(paths.config + '.bak', 'existing backup')
+        self.system.calls.clear()
+        with patch.object(self.system, 'cdp_at', return_value={'kind': 'valid'}):
+            self.assertEqual(self.run_cli(['init', '--yes', '--endpoint', 'http://localhost:9334'])[0], 0)
+        self.assertEqual(self.system.read_text(paths.config), before)
+        self.assertEqual(self.system.read_text(paths.config + '.bak'), 'existing backup')
+        self.assertFalse(any(c[0] in {'write_text', 'make_dir', 'spawn', 'run'} for c in self.system.calls))
