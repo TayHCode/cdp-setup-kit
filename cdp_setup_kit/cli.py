@@ -23,6 +23,7 @@ def parser() -> argparse.ArgumentParser:
     setup.add_argument("--name")
     setup.add_argument("--port", type=int)
     setup.add_argument("--chrome")
+    setup.add_argument("--endpoint", help="validate an existing CDP HTTP endpoint without creating a local profile")
     setup.add_argument("--no-open", action="store_true")
     setup.add_argument("--notice", action="store_true", help="show the security notice again for an existing setup")
     setup.add_argument("--quiet", action="store_true", help="print only the result (use --yes for scripted consent)")
@@ -130,7 +131,7 @@ def main(argv: Optional[Sequence[str]] = None, system: object = None) -> int:
             profiles.add(system, paths, data, args.name, args.port, args.profile_dir, args.chrome)
         elif args.command == "init":
             from .wizard import initialize
-            initialize(system, paths, data, args.yes, args.name, args.port, args.chrome, args.no_open, args.notice, args.quiet)
+            initialize(system, paths, data, args.yes, args.name, args.port, args.chrome, args.no_open, args.notice, args.quiet, args.endpoint)
         elif args.command == "connect":
             from .connect import show
             show(system, data, args.name, args.client, args.ws, args.json)

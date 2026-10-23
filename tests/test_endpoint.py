@@ -11,6 +11,28 @@ class EndpointTests(support.KitTestCase):
         self.profile = {"port": 9222, "profile_dir": str(self.folder / "work")}
         self.active = self.folder / "work" / "DevToolsActivePort"
 
+    def test_supplied_http_origins(self):
+        from cdp_setup_kit.endpoint import parse_http_endpoint
+        for value, expected in (
+            ("http://localhost:9333/", ("http://localhost:9333", "localhost", 9333)),
+            ("http://browser.example", ("http://browser.example:80", "browser.example", 80)),
+            ("http://[::1]:9333", ("http://[::1]:9333", "::1", 9333)),
+        ):
+            with self.subTest(value=value):
+                self.assertEqual(parse_http_endpoint(value), expected)
+
+    def test_supplied_endpoint_rejects_non_origins(self):
+        from cdp_setup_kit.endpoint import parse_http_endpoint
+        from cdp_setup_kit.errors import KitError
+        for value in ("", "https://localhost:9333", "ws://localhost:9333", "http://", "http://localhost:",
+                      "http://localhost:0", "http://localhost:65536", "http://localhost:wrong",
+                      "http://user:password@localhost:9333", "http://localhost:9333/json/version",
+                      "http://localhost:9333?", "http://localhost:9333#", "http://local host:9333",
+                      "http://localhost:9333\n", "http://local'host:9333", "http://[::1%zone]:9333"):
+            with self.subTest(value=value), self.assertRaises(KitError) as error:
+                parse_http_endpoint(value)
+            self.assertEqual(error.exception.exit_code, 2)
+
     def test_status_rows(self):
         self.assertEqual(status(self.system, self.profile)["status"], "stopped")
         self.assertEqual(status(self.system, self.profile, False)["status"], "not-checked")

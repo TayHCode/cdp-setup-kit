@@ -16,6 +16,18 @@ class ConnectTests(support.KitTestCase):
         self.assertEqual(instructions("work", 9223) + "\n", text.replace("9222", "9223"))
         self.assertFalse(any(call[0] == "probe" for call in self.system.calls))
 
+    def test_external_instructions_use_supplied_address_without_local_commands(self):
+        from cdp_setup_kit.connect import external_instructions
+        address = "http://browser.example:9333"
+        output = external_instructions(address)
+        self.assertEqual(output.count(address), 5)
+        self.assertIn("connectOverCDP", output)
+        self.assertIn("connect_over_cdp", output)
+        self.assertIn("--cdp-endpoint", output)
+        self.assertIn("--browser-url=", output)
+        for local_command in ("cdp-setup-kit list", "startup", "open main"):
+            self.assertNotIn(local_command, output)
+
     def test_clients(self):
         for client, match in [("playwright", "connectOverCDP"), ("playwright-python", "connect_over_cdp"), ("playwright-mcp", "--cdp-endpoint"), ("chrome-devtools-mcp", "--browser-url="), ("curl", "/json/version")]:
             code, out, _ = self.run_cli(["connect", "work", "--client", client])

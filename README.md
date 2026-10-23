@@ -8,8 +8,11 @@ between starts. Each named window has a stable local Chrome DevTools Protocol
 `agent-brief` gives them ready-to-paste instructions and MCP settings for
 working in the existing signed-in context.
 
-From the supplied checkout (or clone after publication), with Python and Chrome
-installed, choose your platform. No pip, venv or packages are needed:
+Requires Python 3.9+ and either installed Google Chrome for local profiles or a
+reachable existing CDP HTTP endpoint. `--no-open` skips launching Chrome; local
+setup still requires Chrome. The kit never downloads Chrome. For an existing
+browser, use [endpoint setup](#what-you-need). Otherwise choose your platform
+from the supplied checkout. No pip, venv or packages are needed:
 
 **Windows desktop** — [desktop quickstart](#quickstart-windows)
 Use `py` on Windows; `python3` may be the Microsoft Store stub and is not required.
@@ -86,12 +89,29 @@ record these limits; scheduler registration alone does not verify sign-in start.
 
 ## What you need
 
-Google Chrome installed, Python 3.9 or newer, and Windows 10, Windows 11,
-Linux, or a macOS graphical session. A desktop session is needed for visible
+For local profiles, install Google Chrome and Python 3.9 or newer on Windows 10,
+Windows 11, Linux, or macOS. A desktop session is needed for visible
 windows; SSH alone cannot supply one. Chrome is never downloaded by this tool.
 Google Chrome for Testing is also supported via `--chrome PATH`; other Chromium
 browsers, snap and flatpak are unsupported.
 The quickstarts run directly from a clone and need no packages.
+
+With an existing CDP HTTP endpoint, Chrome does not need to be installed on this
+machine. Validate the endpoint and print connection settings:
+
+```sh
+python3 -m cdp_setup_kit init --yes --no-open --endpoint http://127.0.0.1:9333
+```
+
+On Windows replace `python3` with `py`. Supply the browser's HTTP origin, with
+no path, credentials, query, or fragment. HTTPS and WebSocket URLs are not
+supported by this probe. A failed connection or non-CDP response exits 5.
+Endpoint setup does not record a managed profile, launch a browser, or change
+startup entries. Keep the printed address for your client; local profile commands
+such as `open`, `connect NAME`, and `startup` do not manage this external browser.
+Use only an owner-authorized endpoint on a trusted network or tunnel. Do not
+combine `--endpoint` with `--name`, `--port`, or `--chrome`.
+
 
 Optional command installation: run `pipx install .`, or create a virtual
 environment and run `python3 -m pip install .` inside it (`python` also works when available). Do not install into

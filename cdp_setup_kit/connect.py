@@ -9,8 +9,7 @@ from .system import System
 from .textout import clean_text
 
 
-def instructions(name: str, port: int, client: str = "all") -> str:
-    address = http_endpoint(port)
+def client_instructions(address: str, client: str = "all"):
     sections = {
         "playwright": "Playwright (Node.js):\n  const browser = await chromium.connectOverCDP('" + address + "');\n  const context = browser.contexts()[0];",
         "playwright-python": 'Playwright (Python):\n  browser = playwright.chromium.connect_over_cdp("' + address + '")\n  context = browser.contexts[0]',
@@ -18,6 +17,17 @@ def instructions(name: str, port: int, client: str = "all") -> str:
         "chrome-devtools-mcp": "Chrome DevTools MCP server:\n  npx " + DEVTOOLS_MCP + " --browser-url=" + address,
         "curl": "Read the endpoint metadata (this does not list your tabs):\n  curl " + address + "/json/version",
     }
+    return [sections[key] for key in ("playwright", "playwright-python", "playwright-mcp", "chrome-devtools-mcp")] if client == "all" else [sections[client]]
+
+
+def external_instructions(address: str) -> str:
+    return "\n\n".join(["Attach to the existing browser context. A new context starts signed out."]
+                          + client_instructions(address)
+                          + ["Check the endpoint: curl " + address + "/json/version"])
+
+
+def instructions(name: str, port: int, client: str = "all") -> str:
+    address = http_endpoint(port)
     intro = '''Profile "{}" listens at:  {}
 
 Give your agent that HTTP address, not a ws:// address. The ws:// address
@@ -25,8 +35,7 @@ changes every time the browser starts. The HTTP address does not. Clients
 look up the current ws:// address from it each time they connect.
 
 Attach to the window's existing context. A new context starts signed out.'''.format(name, address)
-    selected = [sections[key] for key in ("playwright", "playwright-python", "playwright-mcp", "chrome-devtools-mcp")] if client == "all" else [sections[client]]
-    return "\n\n".join([intro] + selected + ["Check that it is up (this does not list your tabs):\n  cdp-setup-kit list", "More: docs/connect-agents.md"])
+    return "\n\n".join([intro] + client_instructions(address, client) + ["Check that it is up (this does not list your tabs):\n  cdp-setup-kit list", "More: docs/connect-agents.md"])
 
 
 def show(system: System, data: Dict[str, Any], name: str, client: str = "all", ws: bool = False, as_json: bool = False) -> None:
