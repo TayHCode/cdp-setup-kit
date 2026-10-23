@@ -1,5 +1,17 @@
 # Connect existing agents
 
+For an existing browser on this machine or another trusted machine, validate its
+HTTP endpoint and print client settings without installing Chrome locally:
+
+```sh
+python3 -m cdp_setup_kit init --yes --endpoint http://127.0.0.1:9333
+```
+
+Use `py` on Windows. This reads `/json/version` and creates no local profile.
+Pass the printed address to your client. The commands below apply to profiles
+managed locally by the kit.
+
+
 Give the agent the HTTP endpoint, such as `http://127.0.0.1:9333`.
 Do not save a `ws://` address: its last part changes each time Chrome starts.
 Clients look up the current address from `/json/version` when connecting.

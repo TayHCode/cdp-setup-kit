@@ -1,6 +1,7 @@
 from tests import support
 
 from cdp_setup_kit import config
+from cdp_setup_kit.constants import LOOPBACK
 from cdp_setup_kit.paths import locations
 
 
@@ -130,7 +131,7 @@ class WizardTests(support.KitTestCase):
 class ExistingEndpointTests(support.KitTestCase):
     def test_reachable_endpoint_needs_no_chrome_or_local_profile(self):
         with support.FakeCdpServer() as server:
-            address = 'http://127.0.0.1:' + str(server.port)
+            address = 'http://' + LOOPBACK + ':' + str(server.port)
             code, out, err = self.run_cli(['init', '--yes', '--no-open', '--endpoint', address])
             self.assertEqual((code, err), (0, ''))
             self.assertIn(address, out)

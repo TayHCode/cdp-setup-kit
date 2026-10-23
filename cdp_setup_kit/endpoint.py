@@ -1,8 +1,10 @@
 import re
+import ipaddress
 from typing import Any, Dict, List
 from urllib.parse import urlsplit
 
 from .constants import LOOPBACK
+from .errors import KitError
 from .paths import path_module
 from .system import System
 from .textout import clean_text
@@ -10,6 +12,31 @@ from .textout import clean_text
 
 def http_endpoint(port: int) -> str:
     return "http://{}:{}".format(LOOPBACK, port)
+
+
+def parse_http_endpoint(value: str):
+    try:
+        if any(ord(char) < 33 or ord(char) == 127 for char in value):
+            raise ValueError()
+        parts = urlsplit(value)
+        host = parts.hostname
+        port = parts.port if parts.port is not None else 80
+        if (parts.scheme != "http" or not host or parts.username is not None
+                or parts.password is not None or parts.path not in {"", "/"}
+                or "?" in value or "#" in value or parts.netloc.endswith(":")
+                or "%" in host or not 1 <= port <= 65535):
+            raise ValueError()
+        if ":" in host:
+            ipaddress.IPv6Address(host)
+            authority = "[" + host + "]"
+        else:
+            if not re.fullmatch(r"[a-zA-Z0-9.-]+", host):
+                raise ValueError()
+            authority = host
+        return "http://{}:{}".format(authority, port), host, port
+    except ValueError:
+        raise KitError(2, "--endpoint must be an HTTP origin such as http://localhost:9333",
+                       "paths, credentials, query strings, fragments and other schemes are not supported") from None
 
 
 def status(system: System, profile: Dict[str, Any], check: bool = True) -> Dict[str, Any]:

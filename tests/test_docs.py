@@ -88,6 +88,9 @@ class DocsTests(unittest.TestCase):
         for command in ['py -m cdp_setup_kit init', 'python3 -m cdp_setup_kit init']:
             self.assertIn(command, first)
         self.assertLess(len(first.splitlines()), 48)
+        self.assertIn('reachable existing CDP HTTP endpoint', first)
+        self.assertLess(first.index('Requires Python'), first.index('```'))
+        self.assertIn('--endpoint http://' + LOOPBACK + ':9333', text)
         self.assertLess(text.index('## Security notice'), text.index('## Share with your agents'))
         for value in ['UserKnownHostsFile=TEMPFILE', 'StrictHostKeyChecking=accept-new', '-i /path/to/key', 'ssh USER@HOST true', 'init --yes --no-open', '--show-script']:
             self.assertIn(value, text)

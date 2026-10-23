@@ -10,11 +10,27 @@ from .paths import Locations
 from .system import System
 
 
-def initialize(system: System, paths: Locations, data: Dict[str, Any], yes: bool = False, name: Optional[str] = None, port: Optional[int] = None, chrome_path: Optional[str] = None, no_open: bool = False, notice: bool = False, quiet: bool = False) -> None:
+def initialize(system: System, paths: Locations, data: Dict[str, Any], yes: bool = False, name: Optional[str] = None, port: Optional[int] = None, chrome_path: Optional[str] = None, no_open: bool = False, notice: bool = False, quiet: bool = False, cdp_endpoint: Optional[str] = None) -> None:
     if quiet and not yes:
         raise KitError(2, "--quiet requires --yes to accept the security notice without displaying it")
     if not yes and not system.interactive():
         raise KitError(2, "init needs an interactive terminal", "for SSH/non-interactive setup use init --yes --no-open --name NAME --port PORT, then open NAME (Linux: add --headless; Windows: use the interactive startup task)")
+    if cdp_endpoint is not None:
+        if name is not None or port is not None or chrome_path is not None:
+            raise KitError(2, "cannot combine --endpoint with --name, --port or --chrome")
+        address, host, endpoint_port = endpoint.parse_http_endpoint(cdp_endpoint)
+        if not quiet:
+            print("SECURITY NOTICE\nCDP access permits control of every tab, including signed-in sites. Use only an endpoint you are authorized to access, on a trusted network or tunnel.")
+        if not yes and system.ask("Continue? [y/N] ").strip().lower() not in {"y", "yes"}:
+            print("No changes made.")
+            return
+        if system.cdp_at(host, endpoint_port)["kind"] != "valid":
+            raise KitError(5, "the supplied CDP endpoint is unreachable or did not return CDP metadata",
+                           "start the existing browser or check its address and tunnel, then retry --endpoint")
+        print("CDP endpoint reachable: " + address + ". No local profile was created.")
+        if not quiet:
+            print(connect.external_instructions(address))
+        return
     existing = data["profiles"]
     if existing and name is None and not yes:
         name = system.ask("New profile name (empty leaves setup unchanged): ").strip()
@@ -25,7 +41,8 @@ def initialize(system: System, paths: Locations, data: Dict[str, Any], yes: bool
         return
     binary = chrome.find_chrome(system, data, chrome_path)
     if not binary:
-        raise KitError(5, "Google Chrome was not found", chrome.CHROME_NOT_FOUND_HINT)
+        raise KitError(5, "Google Chrome was not found: no Chrome and no CDP endpoint",
+                       chrome.CHROME_NOT_FOUND_HINT + "; or use init --yes --endpoint HTTP_URL for an existing browser. --no-open alone still requires Chrome for local setup.")
     version, _ = chrome.identity(system, binary)
     if not yes:
         print("Chrome: " + binary + "\nVersion: " + (version or "unknown"))
