@@ -175,7 +175,10 @@ class ExistingEndpointTests(support.KitTestCase):
 
     def test_external_endpoint_preserves_existing_config_and_backup(self):
         from unittest.mock import patch
-        self.run_cli(['add', 'work', '--port', '9333'])
+        self.system = support.FakeSystem(self.folder, 'windows')
+        self.system.env['CDP_SETUP_KIT_DIR'] = r'D:\kit-data'
+        code, _, err = self.run_cli(['add', 'work', '--port', '9333'])
+        self.assertEqual((code, err), (0, ''))
         paths = locations(self.system)
         before = self.system.read_text(paths.config)
         self.system.write_text(paths.config + '.bak', 'existing backup')
